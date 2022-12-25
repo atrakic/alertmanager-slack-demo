@@ -1,0 +1,22 @@
+# https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/application/job/cronjob.yaml
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: demo-cronjob
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: app
+            image: busybox
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Testing stderr; commandnotfound
+          restartPolicy: Never

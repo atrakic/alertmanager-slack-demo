@@ -1,0 +1,34 @@
+# https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/alerting.md#alertmanagerconfig-resource
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: demo
+  labels:
+    alertconfig: drdk-config
+spec:
+  route:
+    groupBy: ['...']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 3h
+    receiver: "slack"
+  receivers:
+    - name: 'null'
+    - name: "slack"
+      slackConfigs:
+        - apiURL:
+            key: "webhook"
+            name: "alertmanager-slack-webhook"
+          channel: "#team-b-alerts"
+          username: "Demo AlertManager Memory"
+          color: '{{ template "slack.dr.color" . }}'
+          title: '{{ template "slack.dr.title" . }}'
+          text: '{{ template "slack.dr.text" . }}'
+          actions:
+            - type: button
+              text: 'Runbook :green_book:'
+              url: '{{ (index .Alerts 0).Annotations.runbook }}'
+            - type: button
+              text: 'Dashboard :grafana:'
+              url: '{{ (index .Alerts 0).Annotations.dashboard }}'

@@ -1,0 +1,48 @@
+# https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/alerting.md#alertmanagerconfig-resource
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: memory-demo
+  labels:
+    alertconfig: drdk-config
+spec:
+  route:
+    receiver: "null"
+    groupBy: ["job", "alertname", "service"]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    routes:
+      - match_re:
+          severity: warning|critical
+        receiver: "slack"
+        continue: true
+        repeat_interval: 12h
+  receivers:
+    - name: 'null'
+    - name: "slack"
+      slackConfigs:
+        - apiURL:
+            key: "webhook"
+            name: "alertmanager-slack-webhook"
+          channel: "#team-b-alerts"
+          color: '{{ template "slack.dr.color" . }}'
+          title: |-
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+          text: >-
+            {{ range .Alerts -}}
+            *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+            *Description:* {{ .Annotations.description }}
+            *Details:*
+              {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+              {{ end }}
+            {{ end }}
+          username: AlertManager
+          actions:
+          - type: button
+            text: 'Runbook :green_book:'
+            url: '{{ (index .Alerts 0).Annotations.runbook }}'
+          - type: button
+            text: 'Dashboard :grafana:'
+            url: '{{ (index .Alerts 0).Annotations.dashboard }}'
